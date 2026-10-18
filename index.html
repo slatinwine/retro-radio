@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>无线电 · Retro Radio</title>
+<style>
+  :root {
+    --wood-dark: #4a3221;
+    --wood-mid:  #6b4a2e;
+    --wood-lite: #8a6238;
+    --cream:     #f3e9d2;
+    --needle:    #c0392b;
+    --amber:     #ffb24d;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+  html { scrollbar-gutter: stable; }
+  html, body { height: 100%; }
+  body {
+    background: #e8e2d6;
+    background-image: radial-gradient(ellipse at 50% 30%, #efe9dd 0%, #ddd5c4 70%, #cfc5b0 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Georgia", "Times New Roman", serif;
+    min-height: 100vh; padding: 24px;
+    overflow-x: hidden;
+  }
+
+  /* ---------- Cabinet ---------- */
+  .radio {
+    width: 780px; max-width: 100%; min-width: 0;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(0,0,0,.10) 0 2px, rgba(255,255,255,.05) 2px 7px, rgba(0,0,0,0) 7px 14px),
+      linear-gradient(160deg, var(--wood-lite) 0%, var(--wood-mid) 45%, var(--wood-dark) 100%);
+    border-radius: 26px;
+    padding: 26px 30px 30px;
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,.25),
+      inset 0 -6px 14px rgba(0,0,0,.45),
+      0 30px 60px rgba(50,35,20,.45),
+      0 6px 14px rgba(50,35,20,.3);
+    position: relative;
+  }
+  .radio::before, .radio::after {
+    content: ""; position: absolute; bottom: -12px; width: 90px; height: 14px;
+    background: linear-gradient(#2c1d10, #191009); border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,.4);
+  }
+  .radio::before { left: 60px; } .radio::after { right: 60px; }
+
+  .row { display: flex; gap: 24px; }
+  .row > * { min-width: 0; }
+
+  /* ---------- Speaker grille ---------- */
+  .grille {
+    flex: 0 0 235px; align-self: stretch;
+    background: #7c5a33;
+    border-radius: 16px;
+    border: 4px solid #3a2716;
+    box-shadow: inset 0 0 18px rgba(0,0,0,.6), 0 2px 3px rgba(255,255,255,.15);
+    position: relative;
+  }
+  .grille .mesh {
+    position: absolute; inset: 0; border-radius: 11px;
+    background:
+      radial-gradient(circle, rgba(0,0,0,.75) 1.6px, transparent 2.2px) 0 0 / 14px 14px,
+      radial-gradient(circle, rgba(0,0,0,.75) 1.6px, transparent 2.2px) 7px 7px / 14px 14px,
+      linear-gradient(#a98753, #7c5a33);
+  }
+  .brandplate {
+    position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+    padding: 5px 18px; white-space: nowrap;
+    background: linear-gradient(#d9b96a, #a8862f);
+    color: #3a2a08; border-radius: 6px;
+    font-size: 13px; letter-spacing: 5px; font-weight: bold;
+    border: 1px solid #6b5116;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,.6), 0 2px 4px rgba(0,0,0,.4);
+  }
+
+  /* ---------- Dial ---------- */
+  .dial-panel { flex: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .dial-window {
+    background: linear-gradient(#fbf4e0, var(--cream) 60%, #e6d8b4);
+    border-radius: 14px;
+    border: 4px solid #3a2716;
+    box-shadow: inset 0 0 14px rgba(120,90,40,.45), 0 2px 3px rgba(255,255,255,.15);
+    padding: 12px 18px 8px;
+    position: relative; overflow: hidden;
+    height: 150px;
+    touch-action: none; cursor: pointer;
+  }
+  .dial-window::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(115deg, rgba(255,255,255,.35) 0 18%, transparent 30%);
+    pointer-events: none; border-radius: 10px;
+  }
+  .scale { position: relative; height: 64px; margin-top: 4px; }
+  .scale-line { position: absolute; left: 0; right: 0; top: 40px; height: 2px; background: #4a3a22; }
+  .tick { position: absolute; top: 26px; width: 1px; height: 16px; background: #4a3a22; pointer-events: none; }
+  .tick.major { height: 22px; width: 2px; }
+  .tick-label {
+    position: absolute; top: 2px; transform: translateX(-50%);
+    font-size: 13px; color: #4a3a22; font-family: "Trebuchet MS", sans-serif; font-weight: bold;
+    pointer-events: none;
+  }
+  .station-dot {
+    position: absolute; top: 46px; width: 7px; height: 7px; border-radius: 50%;
+    background: #7a2d20; transform: translateX(-50%);
+    box-shadow: 0 1px 1px rgba(0,0,0,.3);
+    pointer-events: none;
+  }
+  .needle {
+    position: absolute; top: 8px; bottom: 0; width: 3px;
+    background: linear-gradient(var(--needle), #8e2016);
+    box-shadow: 0 0 4px rgba(192,57,43,.7);
+    transform: translateX(-50%);
+    transition: none; z-index: 3;
+    pointer-events: none;
+  }
+  .needle.glide { transition: left .18s ease-out; }
+
+  .display-row { display: flex; gap: 12px; align-items: stretch; pointer-events: none; }
+  .station-display {
+    flex: 1; min-width: 0; height: 46px;
+    background: radial-gradient(ellipse at center, #241a08 0%, #120d05 80%);
+    border: 3px solid #2c1d10; border-radius: 8px;
+    display: flex; align-items: center; padding: 0 14px;
+    font-family: "Consolas", "Courier New", monospace;
+    color: var(--amber);
+    text-shadow: 0 0 8px rgba(255,178,77,.8);
+    font-size: 17px; letter-spacing: 1px;
+    overflow: hidden; white-space: nowrap;
+  }
+  .station-display.off { color: #3a2c14; text-shadow: none; }
+  .led {
+    width: 46px; flex: none; border-radius: 8px;
+    background: #241a08; border: 3px solid #2c1d10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    font-size: 9px; color: #c8b98f; font-family: "Trebuchet MS", sans-serif; letter-spacing: 1px;
+  }
+  .led-dot { width: 12px; height: 12px; border-radius: 50%; background: #3a1f14; box-shadow: inset 0 1px 2px rgba(0,0,0,.8); }
+  .led-dot.on { background: radial-gradient(circle at 35% 30%, #ff8a5c, #d43d1a); box-shadow: 0 0 10px rgba(255,90,40,.9); }
+
+  /* ---------- Knobs & switch ---------- */
+  .controls { display: flex; align-items: center; gap: 26px; margin-top: 4px; }
+  .knob-block { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .knob {
+    width: 78px; height: 78px; border-radius: 50%;
+    background:
+      repeating-conic-gradient(rgba(0,0,0,.28) 0deg 4deg, rgba(255,255,255,.07) 4deg 8deg),
+      radial-gradient(circle at 35% 30%, #7d5a36, #4a3221 70%, #2c1d10);
+    box-shadow: inset 0 2px 3px rgba(255,255,255,.25), inset 0 -4px 8px rgba(0,0,0,.6),
+                0 6px 12px rgba(0,0,0,.5);
+    position: relative; cursor: grab; touch-action: none;
+  }
+  .knob:active { cursor: grabbing; }
+  .knob .marker {
+    position: absolute; left: 50%; top: 6px; width: 4px; height: 24px;
+    margin-left: -2px; border-radius: 2px;
+    background: var(--cream); box-shadow: 0 0 3px rgba(0,0,0,.6);
+  }
+  .knob-label {
+    font-size: 11px; letter-spacing: 3px; color: #d8c49a;
+    font-family: "Trebuchet MS", sans-serif; font-weight: bold;
+  }
+  .switch-block { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-left: 4px; }
+  .switch {
+    width: 34px; height: 64px; border-radius: 8px;
+    background: linear-gradient(#241a10, #3a2a18);
+    border: 2px solid #191009; box-shadow: inset 0 2px 6px rgba(0,0,0,.8);
+    position: relative; cursor: pointer; touch-action: manipulation;
+  }
+  .switch .lever {
+    position: absolute; left: 4px; right: 4px; height: 26px; border-radius: 5px;
+    background: linear-gradient(#cfc3a5, #9a8b68);
+    box-shadow: 0 2px 5px rgba(0,0,0,.6), inset 0 1px 1px rgba(255,255,255,.7);
+    transition: top .12s ease;
+  }
+  .switch.off .lever { top: 4px; } .switch.on .lever { top: 30px; }
+
+  .hint {
+    margin-top: 14px; text-align: center;
+    font-size: 12px; color: #c9b58c; font-family: "Trebuchet MS", sans-serif;
+    letter-spacing: 1px;
+  }
+
+  .dial-window.lit { box-shadow: inset 0 0 14px rgba(120,90,40,.45), 0 2px 3px rgba(255,255,255,.15), 0 0 22px rgba(255,200,110,.35); }
+  .station-display.lit { box-shadow: 0 0 18px rgba(255,178,77,.25), inset 0 0 12px rgba(0,0,0,.8); }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 760px) {
+    body { padding: 12px; }
+    .radio { padding: 16px 14px 22px; border-radius: 20px; }
+    .radio::before, .radio::after { width: 60px; bottom: -9px; height: 10px; }
+    .radio::before { left: 30px; } .radio::after { right: 30px; }
+    .row { flex-direction: column; gap: 14px; }
+    .grille { flex: none; height: 90px; border-radius: 12px; }
+    .grille .mesh { border-radius: 8px; }
+    .brandplate { bottom: 10px; font-size: 11px; padding: 3px 12px; letter-spacing: 3px; }
+    .dial-window { height: 138px; padding: 10px 10px 8px; }
+    .scale { height: 56px; }
+    .tick-label { font-size: 10px; }
+    .station-display { font-size: 13px; height: 40px; padding: 0 10px; }
+    .led { width: 38px; }
+    .controls { gap: 18px; justify-content: center; margin-top: 10px; }
+    .knob { width: 92px; height: 92px; }
+    .knob .marker { height: 28px; }
+    .hint { font-size: 10px; letter-spacing: 0; margin-top: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="radio">
+  <div class="row">
+    <div class="grille"><div class="mesh"></div><div class="brandplate">WORKBUDDY · 无线电社</div></div>
+
+    <div class="dial-panel">
+      <div class="dial-window" id="dialWindow">
+        <div class="scale" id="scale">
+          <div class="scale-line"></div>
+          <div class="needle" id="needle" style="left:0%"></div>
+        </div>
+        <div class="display-row">
+          <div class="station-display off" id="stationDisplay">·· ·· ··</div>
+          <div class="led"><div class="led-dot" id="ledDot"></div>POWER</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="switch-block">
+          <div class="switch off" id="powerSwitch"><div class="lever"></div></div>
+          <div class="knob-label">POWER</div>
+        </div>
+        <div class="knob-block">
+          <div class="knob" id="tuneKnob"><div class="marker"></div></div>
+          <div class="knob-label">TUNING</div>
+        </div>
+        <div class="knob-block">
+          <div class="knob" id="volKnob"><div class="marker"></div></div>
+          <div class="knob-label">VOLUME</div>
+        </div>
+      </div>
+
+      <div class="hint">拖刻度盘或旋钮调台 · 靠近电台自动吸附 · 双击 TUNING 跳下一台 · 双击 VOLUME 复位音量</div>
+    </div>
+  </div>
+</div>
+
+<audio id="player" preload="none" crossorigin="anonymous"></audio>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ===== 已实测可用的电台流（2026-10-18 全部 HTTP 200）===== */
+  const STATIONS = [
+    { freq:  89.1, name: "SomaFM · Drone Zone 空灵氛围", url: "https://ice1.somafm.com/dronezone-128-mp3" },
+    { freq:  90.5, name: "SomaFM · Boot Liquor 美式民谣", url: "https://ice1.somafm.com/bootliquor-128-mp3" },
+    { freq:  92.3, name: "SomaFM · Fluid 器乐律动",       url: "https://ice1.somafm.com/fluid-128-mp3" },
+    { freq:  94.7, name: "SomaFM · Groove Salad 沙发音乐", url: "https://ice1.somafm.com/groovesalad-128-mp3" },
+    { freq:  96.1, name: "SomaFM · Lush 人声 Chill",      url: "https://ice1.somafm.com/lush-128-mp3" },
+    { freq:  97.9, name: "SomaFM · Secret Agent 谍战爵士", url: "https://ice1.somafm.com/secretagent-128-mp3" },
+    { freq:  99.4, name: "SomaFM · Seventies 七十年代",    url: "https://ice1.somafm.com/seventies-128-mp3" },
+    { freq: 100.8, name: "SomaFM · U80s 八十年代合成器",   url: "https://ice1.somafm.com/u80s-128-mp3" },
+    { freq: 103.3, name: "SomaFM · Indie Pop 独立流行",    url: "https://ice1.somafm.com/indiepop-128-mp3" },
+    { freq: 105.9, name: "SomaFM · Space Station 太空电子", url: "https://ice1.somafm.com/spacestation-128-mp3" },
+  ];
+  const FMIN = 88, FMAX = 108;
+  const LOCK = 0.35;      // 锁台容差 (MHz)
+  const SNAP = 0.22;      // 磁性吸附容差
+
+  /* ===== 状态 ===== */
+  let power = false;
+  let freq = 92.0;
+  let volume = 0.75;
+  let currentStation = null;
+  let staticOn = false;
+
+  /* ===== DOM ===== */
+  const $ = id => document.getElementById(id);
+  const needle = $("needle"), scale = $("scale"), dialWindow = $("dialWindow");
+  const stationDisplay = $("stationDisplay"), ledDot = $("ledDot");
+  const powerSwitch = $("powerSwitch"), tuneKnob = $("tuneKnob"), volKnob = $("volKnob");
+  const player = $("player");
+
+  /* ===== 刻度盘 ===== */
+  const f2pct = f => (f - FMIN) / (FMAX - FMIN) * 100;
+  (function buildScale() {
+    for (let f = FMIN; f <= FMAX; f += 1) {
+      const major = f % 2 === 0;
+      const t = document.createElement("div");
+      t.className = "tick" + (major ? " major" : "");
+      t.style.left = f2pct(f) + "%";
+      scale.appendChild(t);
+      if (major) {
+        const lb = document.createElement("div");
+        lb.className = "tick-label"; lb.textContent = f;
+        lb.style.left = f2pct(f) + "%";
+        scale.appendChild(lb);
+      }
+    }
+    STATIONS.forEach(s => {
+      const d = document.createElement("div");
+      d.className = "station-dot"; d.style.left = f2pct(s.freq) + "%";
+      scale.appendChild(d);
+    });
+  })();
+
+  const clampF = f => Math.min(FMAX, Math.max(FMIN, f));
+  function renderFreq(glide) {
+    if (glide) {
+      needle.classList.add("glide");
+      setTimeout(() => needle.classList.remove("glide"), 200);
+    }
+    needle.style.left = f2pct(freq) + "%";
+    tuneKnob.style.transform = `rotate(${(freq - FMIN) / (FMAX - FMIN) * 270 - 135}deg)`;
+  }
+
+  /* ===== 静电噪声 ===== */
+  let actx = null, noiseGain = null;
+  function ensureAudioCtx() {
+    if (actx) return;
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    const len = actx.sampleRate * 2;
+    const buf = actx.createBuffer(1, len, actx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src = actx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const bp = actx.createBiquadFilter();
+    bp.type = "bandpass"; bp.frequency.value = 2200; bp.Q.value = 0.6;
+    noiseGain = actx.createGain(); noiseGain.gain.value = 0;
+    src.connect(bp).connect(noiseGain).connect(actx.destination);
+    src.start();
+  }
+  function setStatic(on, near) {
+    if (!actx) return;
+    const target = on ? 0.05 + near * 0.10 : 0;
+    noiseGain.gain.setTargetAtTime(target, actx.currentTime, 0.05);
+    staticOn = on;
+  }
+
+  /* ===== 播放逻辑 ===== */
+  const stationAt = () => STATIONS.find(s => Math.abs(s.freq - freq) <= LOCK) || null;
+
+  let displayTimer = null;
+  function showStation(text) {
+    stationDisplay.textContent = text;
+    stationDisplay.classList.remove("off");
+    clearTimeout(displayTimer);
+    displayTimer = setTimeout(() => {
+      if (!power) stationDisplay.classList.add("off");
+    }, 600);
+  }
+
+  function tune() {
+    const st = stationAt();
+    if (!power) { renderFreq(); return; }
+    if (st) {
+      if (currentStation !== st) {
+        currentStation = st;
+        player.src = st.url;
+        player.volume = volume;
+        player.play().catch(() => {});
+      }
+      showStation(st.name + "  ·  " + st.freq.toFixed(1) + " MHz");
+      setStatic(false);
+    } else {
+      if (currentStation) { currentStation = null; player.pause(); }
+      const near = Math.min(...STATIONS.map(s => Math.abs(s.freq - freq)));
+      setStatic(true, Math.max(0, 1 - near / 3));
+      showStation("~ 沙沙 ~  " + freq.toFixed(1) + " MHz");
+    }
+  }
+
+  /* 松手后磁性吸附到最近的电台 */
+  function snapToStation() {
+    const st = STATIONS.find(s => Math.abs(s.freq - freq) <= SNAP);
+    if (st && st.freq !== freq) {
+      freq = st.freq;
+      renderFreq(true);
+    }
+    tune();
+  }
+
+  /* ===== 电源 ===== */
+  function setPower(on) {
+    power = on;
+    powerSwitch.className = "switch " + (on ? "on" : "off");
+    ledDot.classList.toggle("on", on);
+    dialWindow.classList.toggle("lit", on);
+    stationDisplay.classList.toggle("lit", on);
+    if (on) {
+      ensureAudioCtx();
+      actx.resume();
+      tune();
+    } else {
+      player.pause();
+      currentStation = null;
+      setStatic(false);
+      stationDisplay.classList.add("off");
+      stationDisplay.textContent = "·· ·· ··";
+    }
+  }
+  powerSwitch.addEventListener("click", () => setPower(!power));
+
+  /* ===== 刻度盘直接调台（手机友好）===== */
+  let scrubbing = false;
+  function freqFromX(clientX) {
+    const r = scale.getBoundingClientRect();
+    const x = Math.min(Math.max(clientX - r.left, 0), r.width);
+    return clampF(FMIN + (x / r.width) * (FMAX - FMIN));
+  }
+  dialWindow.addEventListener("pointerdown", e => {
+    if (e.target.closest(".display-row")) return;
+    scrubbing = true;
+    dialWindow.setPointerCapture(e.pointerId);
+    needle.classList.remove("glide");
+    freq = freqFromX(e.clientX);
+    renderFreq();
+    tune();
+    e.preventDefault();
+  });
+  dialWindow.addEventListener("pointermove", e => {
+    if (!scrubbing) return;
+    freq = freqFromX(e.clientX);
+    renderFreq();
+    tune();
+  });
+  const endScrub = () => { if (scrubbing) { scrubbing = false; snapToStation(); } };
+  dialWindow.addEventListener("pointerup", endScrub);
+  dialWindow.addEventListener("pointercancel", endScrub);
+
+  /* ===== 旋钮：双向拖动 + 滚轮 + 双击 ===== */
+  function dragKnob(el, onDelta, onDbl) {
+    let lastX = null, lastY = null, dragging = false;
+    el.addEventListener("pointerdown", e => {
+      dragging = true; lastX = e.clientX; lastY = e.clientY;
+      el.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    el.addEventListener("pointermove", e => {
+      if (!dragging) return;
+      const dx = lastX - e.clientX, dy = lastY - e.clientY;
+      lastX = e.clientX; lastY = e.clientY;
+      onDelta((dy - dx) * 0.22, false);
+    });
+    const end = () => { if (dragging) { dragging = false; onDelta(0, true); } };
+    el.addEventListener("pointerup", end);
+    el.addEventListener("pointercancel", end);
+    el.addEventListener("wheel", e => {
+      e.preventDefault();
+      onDelta(-Math.sign(e.deltaY) * 0.5, false);
+    }, { passive: false });
+    if (onDbl) el.addEventListener("dblclick", onDbl);
+  }
+
+  dragKnob(tuneKnob,
+    (d, done) => {
+      if (!done) {
+        freq = clampF(freq + d);
+        renderFreq();
+        tune();
+      } else {
+        snapToStation();   // 松手吸附
+      }
+    },
+    () => { // 双击 = 下一台
+      const next = STATIONS.find(s => s.freq > freq + 0.01) || STATIONS[0];
+      freq = next.freq;
+      renderFreq(true);
+      tune();
+    }
+  );
+
+  function renderVol() {
+    volKnob.style.transform = `rotate(${-135 + volume * 270}deg)`;
+    player.volume = volume;
+  }
+  dragKnob(volKnob,
+    (d, done) => {
+      volume = Math.min(1, Math.max(0, volume + d / 90));
+      renderVol();
+      if (power) showStation("音量 " + Math.round(volume * 10));
+    },
+    () => { volume = 0.75; renderVol(); if (power) showStation("音量复位 7"); } // 双击复位
+  );
+  renderVol();
+
+  window.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      const step = (e.key === "ArrowRight" ? 1 : -1) * (e.shiftKey ? 1 : 0.2);
+      freq = clampF(freq + step);
+      renderFreq();
+      tune();
+      if (Math.abs(step) >= 1) snapToStation();
+    }
+  });
+
+  renderFreq();
+})();
+</script>
+</body>
+</html>
